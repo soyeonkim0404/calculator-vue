@@ -18,7 +18,7 @@
             <button @click="operator('+')">+</button>            
             <button @click="number('0')" class="zero">0</button>            
             <button @click="dot('.')">.</button>
-            <button @click="result">=</button>
+            <button @click="compute">=</button>
         </div>
     </main>
 </template>
@@ -28,38 +28,52 @@
         data(){
             return{
                 current : '',
+                operatorChked : true,
+                computeChked : false,
             }
         },
         methods:{   
             clear(){
                 this.current = '';
+                this.operatorChked = true;
             },
             operator(e){
+                if(this.operatorChked) return false;
+                if(this.computeChked){
+                    this.computeChked = false;
+                }
                 this.current += e;
+                return this.operatorChked = true;
             },
             number(n){
-                this.current += n;
+                if(this.computeChked){
+                    this.current = n;
+                    this.computeChked = false;
+                }else{
+                    this.current += n;
+                }
+                this.operatorChked = false;
             },
             dot(e){
                 this.current += e;
             },
-            result(){
+            compute(){
+                if(this.operatorChked) return;
                 this.current = eval(this.current);
+                this.computeChked = true;
             }
         }
     }
 </script>
 
 <style scoped>
-/* style.css */ * { box-sizing: border-box; color: white; } main { width: 300px;
-} .button-wrap { display: grid; /* 한 줄에 4개씩, 모두 동일한 비율 적용(1:1:1:1)
-*/ grid-template-columns: repeat(4, 1fr); } input, button { height: 70px;
-outline: none; } input { width: 100%; text-align: right; border: none;
-background: #5B5B5D; padding-right: 1rem; font-size: 3rem; } button {
-background: #828284; border: 1px solid #454448; font-size: 2rem; } /*
-nth-child(4n+2): 4번째 요소마다 스타일을 적용하는데 처음에만 두번째에 적용 */
+* { box-sizing: border-box; color: white; } 
+main { width: 300px;} 
+.button-wrap { display: grid;grid-template-columns: repeat(4, 1fr); } 
+input, button { height: 70px; outline: none; } 
+input { width: 100%; text-align: right; border: none;background: #5B5B5D; padding-right: 1rem; font-size: 3rem; } button {background: #828284; border: 1px solid #454448; font-size: 2rem; }
 button:nth-child(4n+2), button:last-child { background-color: orange; }
-button:hover { opacity: .5; } .ac { /* 첫 번째 선부터 4번째 선까지 지정 */
-grid-column: 1/4; background: #6A6A6C; } .zero { /* 첫 번째 선부터 3번째 선까지
-지정 */ grid-column: 1/3; }
+button:hover { opacity: .5; } 
+.ac {grid-column: 1/4; background: #6A6A6C; } 
+.zero {grid-column: 1/3; }
 </style>
