@@ -1,72 +1,81 @@
 <template>
   <div>
-    <!--    <form name="form" id="form" method="post">
-      <input type="text" />
-      <input type="button" @click="showModal = true" value="우편번호" />
-    </form>-->
-
-    <form name="form" id="form" method="post">
-      <input type="text" v-model="text" />
-      <input type="button" @click="enterSearch" value="검색" />
-    </form>
-
-    <!--    <div id="list">
-      <ul>
-        <li v-for="sh in shs" :key="sh">
-          {{ sh }}
-        </li>
-      </ul>
-    </div>-->
-
-    <modal v-if="showModal" @close="showModal = false">
-      <div slot="body">
-        <input type="text" v-model="text" />
-      </div>
-    </modal>
+    <input type="text" v-model="postcode" placeholder="우편번호" />
+    <input
+      type="button"
+      @click="execDaumPostcode()"
+      value="우편번호 찾기"
+    /><br />
+    <input type="text" id="address" placeholder="주소" /><br />
+    <input type="text" id="detailAddress" placeholder="상세주소" />
   </div>
 </template>
 
 <script>
 import axios from "axios";
-import Modal from "@/components/common/Modal";
 export default {
-  components: {
-    Modal,
-  },
   data() {
     return {
-      text: "",
-      test: [],
-      showModal: false,
+      postcode: "",
+      address: "",
+      extraAddress: "",
     };
   },
-  // created() {
-  //   let vm = this;
-  //   axios
-  //     .get("https://www.juso.go.kr/addrlink/addrLinkApiJsonp.do")
-  //     .then(function (response) {
-  //       console.log(response);
-  //       vm.test = response.data;
-  //     })
-  //     .catch(function (error) {
-  //       console.log(error);
-  //     });
-  // },
   methods: {
+    execDaumPostcode() {
+      new window.daum.Postcode({
+        oncomplete: (data) => {
+          if (this.extraAddress !== "") {
+            this.extraAddress = "";
+          }
+          if (data.userSelectedType === "R") {
+            // 사용자가 도로명 주소를 선택했을 경우
+            this.address = data.roadAddress;
+          } else {
+            // 사용자가 지번 주소를 선택했을 경우(J)
+            this.address = data.jibunAddress;
+          }
+
+          // 사용자가 선택한 주소가 도로명 타입일때 참고항목을 조합한다.
+          if (data.userSelectedType === "R") {
+            // 법정동명이 있을 경우 추가한다. (법정리는 제외)
+            // 법정동의 경우 마지막 문자가 "동/로/가"로 끝난다.
+            if (data.bname !== "" && /[동|로|가]$/g.test(data.bname)) {
+              this.extraAddress += data.bname;
+            }
+            // 건물명이 있고, 공동주택일 경우 추가한다.
+            if (data.buildingName !== "" && data.apartment === "Y") {
+              this.extraAddress +=
+                this.extraAddress !== ""
+                  ? `, ${data.buildingName}`
+                  : data.buildingName;
+            }
+            // 표시할 참고항목이 있을 경우, 괄호까지 추가한 최종 문자열을 만든다.
+            if (this.extraAddress !== "") {
+              this.extraAddress = `(${this.extraAddress})`;
+            }
+          } else {
+            this.extraAddress = "";
+          }
+          // 우편번호를 입력한다.
+          this.postcode = data.zonecode;
+        },
+      }).open();
+    },
+
     getData() {
       let vm = this;
       axios
-        .get("https://www.juso.go.kr/addrlink/addrLinkApiJsonp.do")
+        .get(
+          "https://www.juso.go.kr/addrlink/addrLinkUrl.do?devU01TX0FVVEgyMDIxMTEyNDE5NTcwMDExMTkzODY="
+        )
         .then(function (response) {
-          //console.log(response);
-          vm.text = response.data;
+          vm.tests = response.data;
+          console.log(response);
         })
         .catch(function (error) {
           console.log(error);
         });
-    },
-    enterSearch() {
-      this.getData();
     },
   },
 };
